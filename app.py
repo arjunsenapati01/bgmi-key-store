@@ -93,36 +93,79 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        
-        if user and check_password_hash(user.password_hash, password):
-            login_user(user)
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard'))
-        flash('Invalid username or password', 'error')
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            
+            print(f"Login attempt for user: {username}")  # Debug log
+            
+            if not username or not password:
+                print("Missing username or password")  # Debug log
+                flash('Please provide both username and password', 'error')
+                return redirect(url_for('login'))
+            
+            user = User.query.filter_by(username=username).first()
+            
+            if not user:
+                print(f"User not found: {username}")  # Debug log
+                flash('Invalid username or password', 'error')
+                return redirect(url_for('login'))
+            
+            if check_password_hash(user.password_hash, password):
+                print(f"Login successful for user: {username}")  # Debug log
+                login_user(user)
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                print(f"Invalid password for user: {username}")  # Debug log
+                flash('Invalid username or password', 'error')
+                return redirect(url_for('login'))
+                
+        except Exception as e:
+            print(f"Error during login: {str(e)}")  # Debug log
+            flash('Error during login. Please try again.', 'error')
+            return redirect(url_for('login'))
+            
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'error')
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            
+            print(f"Attempting to register user: {username}")  # Debug log
+            
+            if not username or not password:
+                print("Missing username or password")  # Debug log
+                flash('Please provide both username and password', 'error')
+                return redirect(url_for('register'))
+            
+            if User.query.filter_by(username=username).first():
+                print(f"Username already exists: {username}")  # Debug log
+                flash('Username already exists', 'error')
+                return redirect(url_for('register'))
+                
+            user = User(
+                username=username,
+                password_hash=generate_password_hash(password),
+                is_admin=False
+            )
+            
+            print(f"Creating new user: {username}")  # Debug log
+            db.session.add(user)
+            db.session.commit()
+            print("User created successfully")  # Debug log
+            
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            print(f"Error during registration: {str(e)}")  # Debug log
+            db.session.rollback()
+            flash('Error during registration. Please try again.', 'error')
             return redirect(url_for('register'))
             
-        user = User(
-            username=username,
-            password_hash=generate_password_hash(password),
-            is_admin=False
-        )
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
     return render_template('register.html')
 
 @app.route('/dashboard')
@@ -443,14 +486,18 @@ def change_admin_password():
     
     return jsonify({'message': 'Password updated successfully'}), 200
 
-# Initialize database and create admin user
+# Modify the init_db function to ensure it runs properly
 def init_db():
     try:
         with app.app_context():
+            print("Initializing database...")  # Debug log
             db.create_all()
+            print("Database tables created")  # Debug log
+            
             # Create admin user if not exists
             admin = User.query.filter_by(username='admin').first()
             if not admin:
+                print("Creating admin user...")  # Debug log
                 admin = User(
                     username='admin',
                     password_hash=generate_password_hash('admin123'),
@@ -458,20 +505,27 @@ def init_db():
                 )
                 db.session.add(admin)
                 db.session.commit()
-                print("Admin user created successfully!")
+                print("Admin user created successfully!")  # Debug log
+            else:
+                print("Admin user already exists")  # Debug log
+                
     except Exception as e:
-        print(f"Error initializing database: {str(e)}")
-        # Try to recover by dropping and recreating tables
-        with app.app_context():
-            db.drop_all()
-            db.create_all()
-            admin = User(
-                username='admin',
-                password_hash=generate_password_hash('admin123'),
-                is_admin=True
-            )
-            db.session.add(admin)
-            db.session.commit()
+        print(f"Error initializing database: {str(e)}")  # Debug log
+        try:
+            with app.app_context():
+                print("Attempting to recover database...")  # Debug log
+                db.drop_all()
+                db.create_all()
+                admin = User(
+                    username='admin',
+                    password_hash=generate_password_hash('admin123'),
+                    is_admin=True
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("Database recovered successfully")  # Debug log
+        except Exception as recovery_error:
+            print(f"Error recovering database: {str(recovery_error)}")  # Debug log
 
 # Call init_db when the app starts
 init_db()

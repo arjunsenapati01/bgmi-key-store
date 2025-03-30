@@ -22,7 +22,8 @@
         "FLASK_APP": "app.py",
         "FLASK_DEBUG": "0",
         "PYTHONUNBUFFERED": "1",
-        "SQLALCHEMY_ECHO": "true"
+        "SQLALCHEMY_ECHO": "true",
+        "VERCEL_ENV": "production"
     },
     "functions": {
         "app.py": {
