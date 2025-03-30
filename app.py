@@ -13,14 +13,12 @@ import tempfile
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 
-# Use temporary directory for SQLite in Vercel
+# Use in-memory database in Vercel
 if os.environ.get('VERCEL_ENV'):
-    temp_dir = tempfile.gettempdir()
-    db_path = os.path.join(temp_dir, 'bgmi_keys.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 else:
-    db_path = 'bgmi_keys.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Modify upload folder to use temporary directory in Vercel
@@ -426,11 +424,26 @@ def change_admin_password():
 
 # Initialize database and create admin user
 def init_db():
-    with app.app_context():
-        db.create_all()
-        # Create admin user if not exists
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
+    try:
+        with app.app_context():
+            db.create_all()
+            # Create admin user if not exists
+            admin = User.query.filter_by(username='admin').first()
+            if not admin:
+                admin = User(
+                    username='admin',
+                    password_hash=generate_password_hash('admin123'),
+                    is_admin=True
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("Admin user created successfully!")
+    except Exception as e:
+        print(f"Error initializing database: {str(e)}")
+        # Try to recover by dropping and recreating tables
+        with app.app_context():
+            db.drop_all()
+            db.create_all()
             admin = User(
                 username='admin',
                 password_hash=generate_password_hash('admin123'),
@@ -438,7 +451,6 @@ def init_db():
             )
             db.session.add(admin)
             db.session.commit()
-            print("Admin user created successfully!")
 
 # Call init_db when the app starts
 init_db()
