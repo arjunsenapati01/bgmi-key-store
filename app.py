@@ -17,7 +17,9 @@ app.config['SECRET_KEY'] = 'your-secret-key-here'
 
 # Configure SQLAlchemy for Vercel
 if os.environ.get('VERCEL_ENV') == 'production':
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    # Use persistent database in /tmp directory
+    db_path = os.path.join('/tmp', 'bgmi_keys.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
         'pool_recycle': 300,

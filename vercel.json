@@ -3,11 +3,7 @@
     "builds": [
         {
             "src": "app.py",
-            "use": "@vercel/python",
-            "config": {
-                "maxLambdaSize": "15mb",
-                "runtime": "python3.9"
-            }
+            "use": "@vercel/python"
         }
     ],
     "routes": [
@@ -24,8 +20,7 @@
         "PYTHONUNBUFFERED": "1",
         "SQLALCHEMY_ECHO": "true",
         "VERCEL_ENV": "production",
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-        "SQLALCHEMY_ENGINE_OPTIONS": "{\"pool_pre_ping\": true, \"pool_recycle\": 300, \"pool_size\": 5, \"connect_args\": {\"check_same_thread\": false}}"
+        "SQLALCHEMY_DATABASE_URI": "sqlite:////tmp/bgmi_keys.db"
     },
     "functions": {
         "app.py": {
