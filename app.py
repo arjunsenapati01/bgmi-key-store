@@ -462,6 +462,18 @@ def process_payment():
             flash('This key has already been used.', 'danger')
             return redirect(url_for('dashboard'))
         
+        # Check if user already has a pending purchase for this key
+        existing_purchase = Purchase.query.filter_by(
+            user_id=current_user.id,
+            serial_key_id=key_id,
+            status='pending'
+        ).first()
+        
+        if existing_purchase:
+            print(f"User already has pending purchase for key: {key_id}")  # Debug log
+            flash('You already have a pending purchase for this key.', 'danger')
+            return redirect(url_for('dashboard'))
+        
         # Create a new purchase
         purchase = Purchase(
             user_id=current_user.id,
@@ -526,11 +538,7 @@ def init_db():
         with app.app_context():
             print("Initializing database...")  # Debug log
             
-            # Drop all tables first
-            print("Dropping all tables...")  # Debug log
-            db.drop_all()
-            
-            # Create all tables
+            # Create all tables if they don't exist
             print("Creating all tables...")  # Debug log
             db.create_all()
             print("Database tables created")  # Debug log
@@ -563,7 +571,6 @@ def init_db():
         try:
             with app.app_context():
                 print("Attempting to recover database...")  # Debug log
-                db.drop_all()
                 db.create_all()
                 admin = User(
                     username='admin',
