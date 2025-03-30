@@ -364,16 +364,27 @@ def update_qr_code():
 @login_required
 def process_payment():
     try:
+        # Get form data
         key_id = request.form.get('key_id')
         utr_number = request.form.get('utr_number')
         
+        print(f"Processing payment - Key ID: {key_id}, UTR: {utr_number}")  # Debug log
+        
         if not key_id or not utr_number:
+            print("Missing key_id or utr_number")  # Debug log
             flash('Please provide both key ID and UTR number.', 'danger')
             return redirect(url_for('dashboard'))
         
-        key = SerialKey.query.get_or_404(key_id)
+        # Get the key
+        key = SerialKey.query.get(key_id)
+        if not key:
+            print(f"Key not found: {key_id}")  # Debug log
+            flash('Key not found.', 'danger')
+            return redirect(url_for('dashboard'))
+            
         if key.is_used:
-            flash('No keys available.', 'danger')
+            print(f"Key already used: {key_id}")  # Debug log
+            flash('This key has already been used.', 'danger')
             return redirect(url_for('dashboard'))
         
         # Create a new purchase
@@ -383,14 +394,24 @@ def process_payment():
             utr_number=utr_number,
             status='pending'
         )
-        db.session.add(purchase)
-        db.session.commit()
         
-        flash('Payment details submitted successfully. Please wait for admin approval.', 'success')
+        print(f"Creating purchase - User: {current_user.id}, Key: {key.id}")  # Debug log
+        
+        try:
+            db.session.add(purchase)
+            db.session.commit()
+            print("Purchase created successfully")  # Debug log
+            flash('Payment details submitted successfully. Please wait for admin approval.', 'success')
+        except Exception as db_error:
+            print(f"Database error: {str(db_error)}")  # Debug log
+            db.session.rollback()
+            flash('Error saving payment details. Please try again.', 'danger')
+            return redirect(url_for('dashboard'))
+            
     except Exception as e:
+        print(f"General error in process_payment: {str(e)}")  # Debug log
         db.session.rollback()
         flash('Error processing payment. Please try again.', 'danger')
-        print(f"Error in process_payment: {str(e)}")  # For debugging
     
     return redirect(url_for('dashboard'))
 

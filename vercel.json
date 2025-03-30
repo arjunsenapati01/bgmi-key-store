@@ -21,12 +21,13 @@
         "FLASK_ENV": "production",
         "FLASK_APP": "app.py",
         "FLASK_DEBUG": "0",
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "SQLALCHEMY_ECHO": "true"
     },
     "functions": {
         "app.py": {
-            "memory": 1024,
-            "maxDuration": 10
+            "memory": 2048,
+            "maxDuration": 30
         }
     }
 } 
