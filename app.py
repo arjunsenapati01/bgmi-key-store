@@ -8,12 +8,27 @@ from datetime import datetime
 import csv
 from io import StringIO
 import json
+import tempfile
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
+
+# Use temporary directory for SQLite in Vercel
+if os.environ.get('VERCEL_ENV'):
+    temp_dir = tempfile.gettempdir()
+    db_path = os.path.join(temp_dir, 'bgmi_keys.db')
+else:
+    db_path = 'bgmi_keys.db'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/images'
+
+# Modify upload folder to use temporary directory in Vercel
+if os.environ.get('VERCEL_ENV'):
+    app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
+else:
+    app.config['UPLOAD_FOLDER'] = 'static/images'
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Ensure upload folder exists
@@ -425,5 +440,5 @@ if __name__ == '__main__':
             print("Admin user created successfully!")
     app.run(host='0.0.0.0', port=5000, debug=True)
 
-# Add this for Vercel
+# For Vercel
 app = app 
