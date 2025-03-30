@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Test comment to verify update */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .dashboard-section {
+        background-image: url("{{ url_for('static', filename='images/banner3.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 60px 0;
+        position: relative;
+    }
+    
+    .dashboard-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85); /* Darkened overlay */
+    }
+    
+    .dashboard-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 1200px;
+        padding: 2rem;
+    }
+
+    .page-title {
+        color: #f4c542;
+        font-size: 3rem; /* Increased size */
+        font-weight: 800; /* Bolder */
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+        margin-bottom: 2rem;
+        text-align: center;
+        font-family: 'Arial Black', sans-serif;
+    }
+
+    .card {
+        background: rgba(32, 35, 41, 0.95);
+        border: 1px solid rgba(244, 197, 66, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .card-header {
+        background: linear-gradient(45deg, #2c2f35, #373b44);
+        color: #f4c542;
+        border-bottom: 2px solid rgba(244, 197, 66, 0.3);
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .card-header h4 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-family: 'Arial Black', sans-serif;
+    }
+    
+    .card-body {
+        padding: 2rem;
+        background: linear-gradient(180deg, rgba(32, 35, 41, 0.95), rgba(28, 31, 35, 0.95));
+    }
+
+    .table {
+        color: #e6e6e6;
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: rgba(244, 197, 66, 0.1);
+        color: #f4c542;
+        border-bottom: 2px solid rgba(244, 197, 66, 0.3);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1.2rem 1rem;
+    }
+
+    .table td {
+        border-color: rgba(244, 197, 66, 0.1);
+        padding: 1.2rem 1rem;
+        vertical-align: middle;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #f4c542;
+        letter-spacing: 1px;
+    }
+    
+    .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(244, 197, 66, 0.3);
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+        color: #fff;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #f4c542;
+        box-shadow: 0 0 0 0.2rem rgba(244, 197, 66, 0.25);
+        color: #fff;
+    }
+    
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        font-family: 'Arial Black', sans-serif;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(45deg, #f4c542, #ffd700);
+        border: none;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        width: auto;
+        color: #000;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #ffd700, #f4c542);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(244, 197, 66, 0.4);
+        color: #000;
+    }
+
+    .btn-sm {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .badge {
+        padding: 0.6rem 1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-radius: 6px;
+        text-transform: uppercase;
+    }
+
+    .bg-success {
+        background: linear-gradient(45deg, #2ecc71, #27ae60) !important;
+        border: none;
+    }
+
+    .bg-danger {
+        background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+        border: none;
+    }
+
+    .text-success {
+        color: #2ecc71 !important;
+        font-weight: 600;
+    }
+
+    .text-muted {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .modal-content {
+        background: rgba(32, 35, 41, 0.95);
+        border: 2px solid rgba(244, 197, 66, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+        background: linear-gradient(45deg, #2c2f35, #373b44);
+        color: #f4c542;
+        border-bottom: 2px solid rgba(244, 197, 66, 0.3);
+        padding: 1.5rem;
+    }
+
+    .modal-header .modal-title {
+        font-weight: 700;
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-family: 'Arial Black', sans-serif;
+    }
+
+    .modal-body {
+        color: #e6e6e6;
+        padding: 2rem;
+        background: linear-gradient(180deg, rgba(32, 35, 41, 0.95), rgba(28, 31, 35, 0.95));
+    }
+
+    .modal-footer {
+        border-top: 2px solid rgba(244, 197, 66, 0.3);
+        padding: 1.5rem;
+        background: linear-gradient(45deg, #2c2f35, #373b44);
+    }
+
+    .alert {
+        background: rgba(244, 197, 66, 0.1);
+        border: 1px solid rgba(244, 197, 66, 0.3);
+        color: #f4c542;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .alert-success {
+        background: rgba(46, 204, 113, 0.1);
+        border: 1px solid rgba(46, 204, 113, 0.3);
+        color: #2ecc71;
+    }
+
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(244, 197, 66, 0.3);
+    }
+
+    /* PUBG-style scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        background: #202329;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(45deg, #f4c542, #ffd700);
+        border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(244, 197, 66, 0.1);
+        border-radius: 5px;
+    }
+</style>
+
+<div class="dashboard-section">
+    <div class="dashboard-content">
+        <h2 class="page-title">Dashboard</h2>
+        
+        <!-- Available Keys Section -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Available Keys</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Key</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                {% if current_user.is_admin %}
+                                    <th>Purchased By</th>
+                                {% else %}
+                                    <th>Action</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key in keys %}
+                            <tr>
+                                <td>{{ key.id }}</td>
+                                <td>
+                                    {% if key.is_used %}
+                                        <span class="text-muted">Used</span>
+                                    {% else %}
+                                        <span class="text-success">Available</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ "%.2f"|format(key.price) }}</td>
+                                <td>
+                                    {% if key.is_used %}
+                                        <span class="badge bg-danger">Used</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% endif %}
+                                </td>
+                                {% if current_user.is_admin %}
+                                    <td>
+                                        {% if key.purchases %}
+                                            {{ key.purchases[0].user.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        {% if not key.is_used %}
+                                            <button class="btn btn-primary btn-sm buy-key" data-key-id="{{ key.id }}">Buy</button>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for showing purchased key -->
+<div class="modal fade" id="keyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Purchase Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your serial key is:</p>
+                <div class="alert alert-success" id="keyDisplay"></div>
+                <p class="text-muted">Please save this key as it won't be shown again!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,100 @@
+<%- include('partials/header') %>
+
+<style>
+    .hero-section {
+        background-image: url("/images/banner1.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        padding: 2rem;
+        text-align: center;
+        max-width: 800px;
+    }
+    
+    .hero-content h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .hero-content .lead {
+        font-size: 1.8rem;
+        margin-bottom: 2.5rem;
+        font-weight: 300;
+    }
+    
+    .btn-hero {
+        padding: 1rem 2.5rem;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+    }
+    
+    .btn-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .btn-primary.btn-hero {
+        background-color: #ff4d4d;
+        border-color: #ff4d4d;
+    }
+    
+    .btn-primary.btn-hero:hover {
+        background-color: #ff3333;
+        border-color: #ff3333;
+    }
+    
+    .btn-outline-light.btn-hero:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+</style>
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1>TG Hulk Official Key Store for BGMI</h1>
+        <p class="lead">Your trusted source for premium BGMI serial keys</p>
+        <div class="mt-4">
+            <% if (user) { %>
+                <a href="/dashboard" class="btn btn-primary btn-lg btn-hero">Go to Dashboard</a>
+                <a href="/logout" class="btn btn-outline-light btn-lg btn-hero">Logout</a>
+            <% } else { %>
+                <a href="/login" class="btn btn-primary btn-lg btn-hero">Login</a>
+                <a href="/register" class="btn btn-outline-light btn-lg btn-hero">Register</a>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %> 

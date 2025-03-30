@@ -1,0 +1,751 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    :root {
+        --pubg-yellow: #FFD700;
+        --pubg-black: #1A1A1A;
+        --pubg-orange: #FF8C00;
+        --transparent-black: rgba(26, 26, 26, 0.8);
+        --transparent-yellow: rgba(255, 215, 0, 0.1);
+    }
+
+    body {
+        min-height: 100vh;
+        position: relative;
+        background: var(--pubg-black);
+        color: #ffffff;
+        font-family: 'Arial', sans-serif;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            padding: 1rem;
+        }
+
+        .table td, .table th {
+            padding: 0.75rem;
+        }
+
+        .btn-primary, .btn-danger, .btn-outline-primary, .btn-outline-danger {
+            padding: 8px 20px;
+        }
+
+        .key-card {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-title {
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .modal-header {
+            padding: 1rem;
+        }
+
+        .form-control {
+            padding: 8px 15px;
+        }
+    }
+
+    .card {
+        background: var(--transparent-black);
+        border: 2px solid var(--pubg-yellow);
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    .card-header {
+        background: var(--transparent-black);
+        border-bottom: 2px solid var(--pubg-yellow);
+        border-radius: 20px 20px 0 0 !important;
+        padding: 1.5rem;
+    }
+
+    .card-header h4 {
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .table {
+        margin-bottom: 0;
+        color: #ffffff;
+    }
+
+    .table th {
+        border-top: none;
+        background: var(--transparent-yellow);
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        padding: 1rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem;
+        border-color: rgba(255, 215, 0, 0.2);
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, var(--pubg-orange), var(--pubg-yellow));
+        border: none;
+        padding: 10px 25px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        color: var(--pubg-black);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        background: linear-gradient(45deg, var(--pubg-yellow), var(--pubg-orange));
+    }
+
+    .btn-danger {
+        background: linear-gradient(45deg, #ff4444, #ff6b6b);
+        border: none;
+        padding: 10px 25px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        color: #ffffff;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+    }
+
+    .modal-content {
+        background: var(--transparent-black);
+        border-radius: 20px;
+        border: 2px solid var(--pubg-yellow);
+        backdrop-filter: blur(10px);
+    }
+
+    .modal-header {
+        border-bottom: 2px solid var(--pubg-yellow);
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        color: var(--pubg-yellow);
+        font-weight: bold;
+    }
+
+    .form-control {
+        background: var(--transparent-black);
+        border: 2px solid var(--pubg-yellow);
+        border-radius: 25px;
+        padding: 12px 25px;
+        color: #ffffff;
+    }
+
+    .form-control:focus {
+        background: var(--transparent-black);
+        border-color: var(--pubg-orange);
+        box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+        color: #ffffff;
+    }
+
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .alert {
+        border-radius: 15px;
+        border: 2px solid var(--pubg-yellow);
+        background: var(--transparent-black);
+        color: #ffffff;
+        padding: 1rem 1.5rem;
+    }
+
+    .alert-info {
+        border-color: var(--pubg-yellow);
+    }
+
+    .alert-success {
+        border-color: #00ff00;
+    }
+
+    .alert-danger {
+        border-color: #ff4444;
+    }
+
+    .navbar {
+        background: var(--transparent-black) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid var(--pubg-yellow);
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        color: var(--pubg-yellow) !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .nav-link {
+        color: #ffffff !important;
+        font-weight: 500;
+        transition: color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .nav-link:hover {
+        color: var(--pubg-yellow) !important;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--pubg-yellow);
+        border-radius: 25px;
+        padding: 10px 25px;
+        transition: all 0.3s ease;
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--pubg-yellow);
+        color: var(--pubg-black);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .btn-outline-danger {
+        border: 2px solid #ff4444;
+        border-radius: 25px;
+        padding: 10px 25px;
+        transition: all 0.3s ease;
+        color: #ff4444;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-outline-danger:hover {
+        background: #ff4444;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+    }
+
+    .badge {
+        padding: 8px 15px;
+        border-radius: 15px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .badge-category {
+        background: var(--pubg-yellow);
+        color: var(--pubg-black);
+    }
+
+    .key-card {
+        background: var(--transparent-black);
+        border: 2px solid var(--pubg-yellow);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .key-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    .key-info {
+        background: var(--transparent-black);
+        border: 2px solid var(--pubg-orange);
+        border-radius: 15px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-family: monospace;
+        color: var(--pubg-yellow);
+    }
+
+    .duration-card {
+        background: var(--transparent-black);
+        border: 2px solid var(--pubg-yellow);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .duration-card .card-header {
+        background: var(--pubg-yellow) !important;
+        border-bottom: none;
+        border-radius: 20px 20px 0 0 !important;
+    }
+
+    .duration-card .card-header h5 {
+        color: var(--pubg-black);
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-bottom: 2px solid var(--pubg-yellow);
+    }
+
+    .key-price {
+        color: var(--pubg-yellow);
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .category-title {
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .text-muted {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    h2 {
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
+    }
+
+    h3 {
+        color: var(--pubg-yellow);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .key-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .copy-btn {
+        background: var(--pubg-orange);
+        border: none;
+        border-radius: 15px;
+        padding: 8px 15px;
+        color: var(--pubg-black);
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .copy-btn:hover {
+        background: var(--pubg-yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .copy-btn i {
+        font-size: 1.1rem;
+    }
+
+    .copy-success {
+        background: #00ff00;
+        color: var(--pubg-black);
+    }
+
+    .copy-success:hover {
+        background: #00ff00;
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- Pending Purchases Section -->
+    {% if pending_purchases %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Pending Purchases</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>UTR Number</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in pending_purchases %}
+                        <tr>
+                            <td>{{ purchase.serial_key.category }}</td>
+                            <td>{{ durations[purchase.serial_key.duration].name }}</td>
+                            <td>₹{{ "%.2f"|format(purchase.serial_key.price) }}</td>
+                            <td>{{ purchase.utr_number }}</td>
+                            <td>
+                                <span class="badge bg-warning">Pending</span>
+                            </td>
+                            <td>{{ purchase.purchase_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rejected Purchases Section -->
+    {% if rejected_purchases %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Rejected Purchases</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>UTR Number</th>
+                            <th>Purchase Date</th>
+                            <th>Rejection Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in rejected_purchases %}
+                        <tr>
+                            <td>{{ purchase.serial_key.category }}</td>
+                            <td>{{ durations[purchase.serial_key.duration].name }}</td>
+                            <td>${{ "%.2f"|format(purchase.serial_key.price) }}</td>
+                            <td>{{ purchase.utr_number }}</td>
+                            <td>{{ purchase.purchase_date.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                            <td>
+                                <span class="badge bg-danger">Rejected</span>
+                                <br>
+                                <small class="text-muted">{{ purchase.rejection_reason }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Purchased Keys Section -->
+    <div class="purchased-keys">
+        <h2 class="mb-4">Your Purchased Keys</h2>
+        {% if purchased_keys %}
+            <div class="row">
+                {% for key in purchased_keys %}
+                <div class="col-md-6 mb-3">
+                    <div class="key-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary badge-category">{{ key.category }}</span>
+                            <span class="badge bg-info">{{ durations[key.duration].name }}</span>
+                        </div>
+                        <div class="key-info">
+                            {{ key.key }}
+                        </div>
+                        <div class="text-muted small">
+                            Price: ₹{{ "%.2f"|format(key.price) }}
+                            {% for purchase in key.purchases %}
+                                {% if purchase.user_id == current_user.id %}
+                                    <br>Purchased: {{ purchase.purchase_date.strftime('%Y-%m-%d %I:%M %p') }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="key-actions">
+                            <button class="copy-btn" data-key="{{ key.key }}">
+                                <i class="fas fa-copy"></i> Copy Key
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                You haven't purchased any keys yet.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Available Keys Section -->
+    <h2 class="mb-4 mt-5">Available Keys</h2>
+    {% for category, durations_data in categories.items() %}
+    <div class="category-section">
+        <h3 class="category-title">{{ category }}</h3>
+        <div class="row">
+            {% for duration_key, keys in durations_data.items() %}
+            <div class="col-md-4 mb-4">
+                <div class="card duration-card">
+                    {% if category == 'Win iOS' %}
+                    <img src="{{ url_for('static', filename='images/winios.png') }}" 
+                         class="product-image" 
+                         alt="{{ category }} image">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/' + category.lower() + '.jpg') }}" 
+                         class="product-image" 
+                         alt="{{ category }} image">
+                    {% endif %}
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0">{{ durations[duration_key].name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if keys %}
+                            {% set key = keys[0] %}
+                            <p class="key-price mb-3">₹{{ "%.2f"|format(key.price) }}</p>
+                            <p class="text-muted mb-3">{{ keys|length }} keys available</p>
+                            <button class="btn btn-primary btn-lg btn-block buy-btn" 
+                                    data-key-id="{{ key.id }}"
+                                    data-price="{{ key.price }}">
+                                Buy Now
+                            </button>
+                        {% else %}
+                            <p class="text-muted mb-3">No keys available</p>
+                            <button class="btn btn-secondary btn-lg btn-block" disabled>
+                                Sold Out
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Confirm Purchase Modal -->
+<div class="modal fade" id="confirmPurchaseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Purchase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to purchase this key?</p>
+                <div id="purchaseDetails"></div>
+                <div class="form-group mt-3">
+                    <label for="utrNumber">Enter UTR Number:</label>
+                    <input type="text" class="form-control" id="utrNumber" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmPurchaseBtn">Submit Purchase</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Status Modal -->
+<div class="modal fade" id="purchaseStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Purchase Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="purchaseStatusContent">
+                    <!-- Content will be dynamically updated -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('static', filename='images/qr-code.jpg') }}" alt="Payment QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                    <p class="mb-3">Scan this QR code to make the payment</p>
+                    <div class="alert alert-info">
+                        <strong>Amount to Pay: </strong>
+                        <span id="paymentAmount"></span>
+                    </div>
+                </div>
+                <form action="{{ url_for('process_payment') }}" method="POST">
+                    <input type="hidden" name="key_id" id="paymentKeyId">
+                    <div class="mb-3">
+                        <label for="utr_number" class="form-label">Enter UTR Number</label>
+                        <input type="text" class="form-control" id="utr_number" name="utr_number" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Submit Payment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedKeyId = null;
+    const confirmPurchaseModal = new bootstrap.Modal(document.getElementById('confirmPurchaseModal'));
+    const purchaseStatusModal = new bootstrap.Modal(document.getElementById('purchaseStatusModal'));
+    
+    // Handle buy button clicks
+    document.querySelectorAll('.buy-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const keyId = this.getAttribute('data-key-id');
+            const price = this.getAttribute('data-price');
+            document.getElementById('paymentKeyId').value = keyId;
+            document.getElementById('paymentAmount').textContent = `₹${parseFloat(price).toFixed(2)}`;
+            new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        });
+    });
+    
+    // Handle purchase confirmation
+    document.getElementById('confirmPurchaseBtn').addEventListener('click', async function() {
+        if (!selectedKeyId) return;
+        
+        const utrNumber = document.getElementById('utrNumber').value;
+        if (!utrNumber) {
+            alert('Please enter UTR number');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/buy/${selectedKeyId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ utrNumber })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                const statusContent = document.getElementById('purchaseStatusContent');
+                statusContent.innerHTML = `
+                    <div class="alert alert-info">
+                        <h5>Purchase Request Submitted</h5>
+                        <p>Your purchase request has been submitted for admin approval.</p>
+                        <p>Please check your dashboard for updates on the status.</p>
+                    </div>
+                `;
+                
+                confirmPurchaseModal.hide();
+                purchaseStatusModal.show();
+                
+                // Reload page after 3 seconds
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                alert(data.error || 'Error submitting purchase request');
+            }
+        } catch (error) {
+            alert('Error submitting purchase request');
+        }
+    });
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Copy to clipboard functionality
+    document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const key = this.getAttribute('data-key');
+            
+            // Create a temporary input element
+            const tempInput = document.createElement('input');
+            tempInput.value = key;
+            document.body.appendChild(tempInput);
+            
+            // Select and copy the text
+            tempInput.select();
+            document.execCommand('copy');
+            
+            // Remove the temporary input
+            document.body.removeChild(tempInput);
+            
+            // Show success state
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            this.classList.add('copy-success');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy"></i> Copy Key';
+                this.classList.remove('copy-success');
+            }, 2000);
+        });
+    });
+});
+</script>
+{% endblock %} 

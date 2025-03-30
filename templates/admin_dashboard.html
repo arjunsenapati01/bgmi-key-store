@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    
+    <!-- Change Password Section -->
+    <div class="card mb-4">
+        <div class="card-header text-dark">
+            <h4>Change Admin Password</h4>
+        </div>
+        <div class="card-body text-dark">
+            <form id="changePasswordForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Single Key Form -->
+    <div class="card mb-4">
+        <div class="card-header text-dark">
+            <h4>Add Single Key</h4>
+        </div>
+        <div class="card-body text-dark">
+            <form id="addKeyForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="key" class="form-label">Serial Key</label>
+                            <input type="text" class="form-control" id="key" name="key" maxlength="50" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration</label>
+                            <select class="form-select" id="duration" name="duration" required>
+                                {% for duration_key, duration_info in durations.items() %}
+                                <option value="{{ duration_key }}">{{ duration_info.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Key</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Bulk Keys Form -->
+    <div class="card mb-4">
+        <div class="card-header text-dark">
+            <h4>Add Bulk Keys</h4>
+        </div>
+        <div class="card-body text-dark">
+            <form id="addBulkKeysForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="bulkKeys" class="form-label">Serial Keys (one per line)</label>
+                            <textarea class="form-control" id="bulkKeys" name="keys" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bulkPrice" class="form-label">Price per Key</label>
+                            <input type="number" class="form-control" id="bulkPrice" name="price" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="bulkCategory" class="form-label">Category</label>
+                            <select class="form-select" id="bulkCategory" name="category" required>
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bulkDuration" class="form-label">Duration</label>
+                            <select class="form-select" id="bulkDuration" name="duration" required>
+                                {% for duration_key, duration_info in durations.items() %}
+                                <option value="{{ duration_key }}">{{ duration_info.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Bulk Keys</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Keys Table -->
+    <div class="card">
+        <div class="card-header text-dark">
+            <h4>All Keys</h4>
+        </div>
+        <div class="card-body text-dark">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Key</th>
+                            <th>Category</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Purchased By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key in keys %}
+                        <tr>
+                            <td>{{ key.id }}</td>
+                            <td>{{ key.key }}</td>
+                            <td>{{ key.category }}</td>
+                            <td>{{ durations[key.duration].name }}</td>
+                            <td>₹{{ "%.2f"|format(key.price) }}</td>
+                            <td>
+                                {% if key.is_used %}
+                                    <span class="badge bg-danger">Used</span>
+                                {% else %}
+                                    <span class="badge bg-success">Available</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if key.purchases %}
+                                    {{ key.purchases[0].user.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Purchases Section -->
+    <div class="card mb-4">
+        <div class="card-header text-dark">
+            <h4>Pending Purchases</h4>
+        </div>
+        <div class="card-body text-dark">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Key Category</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>UTR Number</th>
+                            <th>Purchase Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in pending_purchases %}
+                        <tr>
+                            <td>{{ purchase.user.username }}</td>
+                            <td>{{ purchase.serial_key.category }}</td>
+                            <td>{{ durations[purchase.serial_key.duration].name }}</td>
+                            <td>₹{{ "%.2f"|format(purchase.serial_key.price) }}</td>
+                            <td>{{ purchase.utr_number }}</td>
+                            <td>{{ purchase.purchase_date.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success approve-purchase" 
+                                        data-purchase-id="{{ purchase.id }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#approvePurchaseModal">
+                                    Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger reject-purchase" 
+                                        data-purchase-id="{{ purchase.id }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#rejectPurchaseModal">
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="card mb-4">
+        <div class="card-header text-dark">
+            <h4>User Management</h4>
+        </div>
+        <div class="card-body text-dark">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Registration Date</th>
+                            <th>Total Purchases</th>
+                            <th>Active Keys</th>
+                            <th>Purchase History</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.registration_date.strftime('%Y-%m-%d %H:%M:%S') if user.registration_date else 'N/A' }}</td>
+                            <td>{{ user.purchases|length }}</td>
+                            <td>
+                                {% set active_keys = user.purchases|selectattr('status', 'equalto', 'approved')|list %}
+                                {{ active_keys|length }}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info view-purchases" 
+                                        data-user-id="{{ user.id }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#userPurchasesModal">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Purchases Modal -->
+    <div class="modal fade" id="userPurchasesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Purchase History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Duration</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userPurchasesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Purchase Modal -->
+    <div class="modal fade" id="approvePurchaseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to approve this purchase?</p>
+                    <div id="approvePurchaseDetails"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmApproveBtn">Approve</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Purchase Modal -->
+    <div class="modal fade" id="rejectPurchaseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please provide a reason for rejection:</p>
+                    <div class="form-group">
+                        <textarea class="form-control" id="rejectionReason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmRejectBtn">Reject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-dark">
+                <h5 class="card-title mb-0">QR Code Management</h5>
+            </div>
+            <div class="card-body text-dark">
+                <form action="{{ url_for('update_qr_code') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="qr_code" class="form-label">Update Payment QR Code</label>
+                        <input type="file" class="form-control" id="qr_code" name="qr_code" accept="image/*" required>
+                        <div class="form-text">Current QR Code:</div>
+                        <img src="{{ url_for('static', filename='images/qr-code.jpg') }}" alt="Payment QR Code" class="img-thumbnail mt-2" style="max-width: 200px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update QR Code</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let selectedPurchaseId = null;
+        const approvePurchaseModal = new bootstrap.Modal(document.getElementById('approvePurchaseModal'));
+        const rejectPurchaseModal = new bootstrap.Modal(document.getElementById('rejectPurchaseModal'));
+        
+        // Handle approve button clicks
+        document.querySelectorAll('.approve-purchase').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedPurchaseId = this.dataset.purchaseId;
+            });
+        });
+        
+        // Handle reject button clicks
+        document.querySelectorAll('.reject-purchase').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedPurchaseId = this.dataset.purchaseId;
+            });
+        });
+        
+        // Handle approve confirmation
+        document.getElementById('confirmApproveBtn').addEventListener('click', async function() {
+            if (!selectedPurchaseId) return;
+            
+            try {
+                const response = await fetch(`/admin/approve_purchase/${selectedPurchaseId}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Purchase approved successfully');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Error approving purchase');
+                }
+            } catch (error) {
+                alert('Error approving purchase');
+            }
+        });
+        
+        // Handle reject confirmation
+        document.getElementById('confirmRejectBtn').addEventListener('click', async function() {
+            if (!selectedPurchaseId) return;
+            
+            const rejectionReason = document.getElementById('rejectionReason').value;
+            if (!rejectionReason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/reject_purchase/${selectedPurchaseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rejectionReason })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Purchase rejected successfully');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Error rejecting purchase');
+                }
+            } catch (error) {
+                alert('Error rejecting purchase');
+            }
+        });
+
+        // Handle single key addition
+        const addKeyForm = document.getElementById('addKeyForm');
+        if (addKeyForm) {
+            addKeyForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('/admin/add_key', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Key added successfully!');
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Error adding key');
+                    }
+                } catch (error) {
+                    alert('Error adding key');
+                }
+            });
+        }
+
+        // Handle bulk keys addition
+        const addBulkKeysForm = document.getElementById('addBulkKeysForm');
+        if (addBulkKeysForm) {
+            addBulkKeysForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('/admin/add_bulk_keys', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Keys added successfully!');
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Error adding keys');
+                    }
+                } catch (error) {
+                    alert('Error adding keys');
+                }
+            });
+        }
+
+        // Handle view purchases button clicks
+        document.querySelectorAll('.view-purchases').forEach(button => {
+            button.addEventListener('click', async function() {
+                const userId = this.dataset.userId;
+                
+                try {
+                    const response = await fetch(`/admin/user_purchases/${userId}`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        const tbody = document.getElementById('userPurchasesTable');
+                        tbody.innerHTML = '';
+                        
+                        data.purchases.forEach(purchase => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${new Date(purchase.purchase_date).toLocaleString()}</td>
+                                <td>${purchase.serial_key.category}</td>
+                                <td>${purchase.serial_key.duration}</td>
+                                <td>₹${parseFloat(purchase.serial_key.price).toFixed(2)}</td>
+                                <td>
+                                    <span class="badge bg-${purchase.status === 'approved' ? 'success' : 
+                                                         purchase.status === 'rejected' ? 'danger' : 'warning'}">
+                                        ${purchase.status}
+                                    </span>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    } else {
+                        alert(data.error || 'Error fetching purchase history');
+                    }
+                } catch (error) {
+                    alert('Error fetching purchase history');
+                }
+            });
+        });
+
+        // Handle password change
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('/admin/change_password', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Password changed successfully!');
+                        this.reset();
+                    } else {
+                        alert(data.error || 'Error changing password');
+                    }
+                } catch (error) {
+                    alert('Error changing password');
+                }
+            });
+        }
+    });
+    </script>
+</div>
+{% endblock %} 
