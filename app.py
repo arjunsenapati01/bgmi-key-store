@@ -149,27 +149,47 @@ def register():
                 flash('Please provide both username and password', 'error')
                 return redirect(url_for('register'))
             
-            if User.query.filter_by(username=username).first():
+            # Check if user exists
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
                 print(f"Username already exists: {username}")  # Debug log
                 flash('Username already exists', 'error')
                 return redirect(url_for('register'))
-                
-            user = User(
+            
+            # Create new user
+            print(f"Creating new user: {username}")  # Debug log
+            new_user = User(
                 username=username,
                 password_hash=generate_password_hash(password),
                 is_admin=False
             )
             
-            print(f"Creating new user: {username}")  # Debug log
-            db.session.add(user)
-            db.session.commit()
-            print("User created successfully")  # Debug log
-            
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                print(f"User {username} created successfully with ID: {new_user.id}")  # Debug log
+                
+                # Verify user was created
+                verify_user = User.query.filter_by(username=username).first()
+                if verify_user:
+                    print(f"User verified in database: {verify_user.username}, ID: {verify_user.id}")  # Debug log
+                    flash('Registration successful! Please login.', 'success')
+                    return redirect(url_for('login'))
+                else:
+                    print("User not found after creation")  # Debug log
+                    flash('Error creating user. Please try again.', 'error')
+                    return redirect(url_for('register'))
+                    
+            except Exception as db_error:
+                print(f"Database error during registration: {str(db_error)}")  # Debug log
+                print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
+                db.session.rollback()
+                flash('Error creating user. Please try again.', 'error')
+                return redirect(url_for('register'))
+                
         except Exception as e:
-            print(f"Error during registration: {str(e)}")  # Debug log
-            db.session.rollback()
+            print(f"General error during registration: {str(e)}")  # Debug log
+            print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
             flash('Error during registration. Please try again.', 'error')
             return redirect(url_for('register'))
             
@@ -500,6 +520,13 @@ def init_db():
     try:
         with app.app_context():
             print("Initializing database...")  # Debug log
+            
+            # Drop all tables first
+            print("Dropping all tables...")  # Debug log
+            db.drop_all()
+            
+            # Create all tables
+            print("Creating all tables...")  # Debug log
             db.create_all()
             print("Database tables created")  # Debug log
             
@@ -518,8 +545,16 @@ def init_db():
             else:
                 print("Admin user already exists")  # Debug log
                 
+            # Verify database state
+            print("Verifying database state...")  # Debug log
+            users = User.query.all()
+            print(f"Total users in database: {len(users)}")  # Debug log
+            for user in users:
+                print(f"User: {user.username}, ID: {user.id}, Admin: {user.is_admin}")  # Debug log
+                
     except Exception as e:
         print(f"Error initializing database: {str(e)}")  # Debug log
+        print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
         try:
             with app.app_context():
                 print("Attempting to recover database...")  # Debug log
@@ -535,6 +570,7 @@ def init_db():
                 print("Database recovered successfully")  # Debug log
         except Exception as recovery_error:
             print(f"Error recovering database: {str(recovery_error)}")  # Debug log
+            print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
 
 # Call init_db when the app starts
 init_db()
