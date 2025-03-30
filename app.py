@@ -9,6 +9,7 @@ import csv
 from io import StringIO
 import json
 import tempfile
+import traceback
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -19,7 +20,8 @@ if os.environ.get('VERCEL_ENV'):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
-        'pool_size': 5
+        'pool_size': 5,
+        'connect_args': {'check_same_thread': False}
     }
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
@@ -452,12 +454,14 @@ def process_payment():
             flash('Payment details submitted successfully. Please wait for admin approval.', 'success')
         except Exception as db_error:
             print(f"Database error: {str(db_error)}")  # Debug log
+            print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
             db.session.rollback()
             flash('Error saving payment details. Please try again.', 'danger')
             return redirect(url_for('dashboard'))
             
     except Exception as e:
         print(f"General error in process_payment: {str(e)}")  # Debug log
+        print(f"Traceback: {traceback.format_exc()}")  # Print full traceback
         db.session.rollback()
         flash('Error processing payment. Please try again.', 'danger')
     

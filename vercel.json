@@ -24,12 +24,13 @@
         "PYTHONUNBUFFERED": "1",
         "SQLALCHEMY_ECHO": "true",
         "VERCEL_ENV": "production",
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "SQLALCHEMY_ENGINE_OPTIONS": "{\"pool_pre_ping\": true, \"pool_recycle\": 300, \"pool_size\": 5, \"connect_args\": {\"check_same_thread\": false}}"
     },
     "functions": {
         "app.py": {
             "memory": 2048,
-            "maxDuration": 30
+            "maxDuration": 60
         }
     }
 } 
