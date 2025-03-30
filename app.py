@@ -4,18 +4,19 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 from io import StringIO
 import json
 import tempfile
 import traceback
+from flask import session
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 
-# Use in-memory database in Vercel
-if os.environ.get('VERCEL_ENV'):
+# Configure SQLAlchemy for Vercel
+if os.environ.get('VERCEL_ENV') == 'production':
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
@@ -23,21 +24,25 @@ if os.environ.get('VERCEL_ENV'):
         'pool_size': 5,
         'connect_args': {'check_same_thread': False}
     }
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Modify upload folder to use temporary directory in Vercel
-if os.environ.get('VERCEL_ENV'):
+    # Use temporary directory for uploads in Vercel
     app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 else:
-    app.config['UPLOAD_FOLDER'] = 'static/images'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
+    app.config['UPLOAD_FOLDER'] = 'uploads'
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Add session configuration
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts for 7 days
+app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookie over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookie
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protect against CSRF
+app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem for session storage
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
