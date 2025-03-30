@@ -23,7 +23,8 @@
         "FLASK_DEBUG": "0",
         "PYTHONUNBUFFERED": "1",
         "SQLALCHEMY_ECHO": "true",
-        "VERCEL_ENV": "production"
+        "VERCEL_ENV": "production",
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
     },
     "functions": {
         "app.py": {

@@ -16,6 +16,11 @@ app.config['SECRET_KEY'] = 'your-secret-key-here'
 # Use in-memory database in Vercel
 if os.environ.get('VERCEL_ENV'):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'pool_size': 5
+    }
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
 
@@ -486,7 +491,7 @@ def change_admin_password():
     
     return jsonify({'message': 'Password updated successfully'}), 200
 
-# Modify the init_db function to ensure it runs properly
+# Initialize database and create admin user
 def init_db():
     try:
         with app.app_context():
