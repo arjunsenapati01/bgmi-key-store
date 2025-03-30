@@ -424,7 +424,8 @@ def change_admin_password():
     
     return jsonify({'message': 'Password updated successfully'}), 200
 
-if __name__ == '__main__':
+# Initialize database and create admin user
+def init_db():
     with app.app_context():
         db.create_all()
         # Create admin user if not exists
@@ -438,7 +439,9 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Admin user created successfully!")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+# Call init_db when the app starts
+init_db()
 
 # For Vercel
 app = app 
