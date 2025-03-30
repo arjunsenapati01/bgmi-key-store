@@ -1,14 +1,24 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime
+import csv
+from io import StringIO
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///keys.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bgmi_keys.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -22,11 +32,7 @@ KEY_DURATIONS = {
     '30_days': {'name': '30 Days', 'days': 30}
 }
 
-# Add these constants at the top of the file
-UPLOAD_FOLDER = 'static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -417,4 +423,7 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Admin user created successfully!")
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+# Add this for Vercel
+app = app 
