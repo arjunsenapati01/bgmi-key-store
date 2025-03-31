@@ -117,6 +117,7 @@ def test_db():
 # Add a simple health check route
 @app.route('/health')
 def health_check():
+    print("Health check route accessed")  # Debug log
     return jsonify({
         'status': 'ok',
         'timestamp': datetime.utcnow().isoformat()
