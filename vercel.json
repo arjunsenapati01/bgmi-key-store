@@ -6,7 +6,7 @@
             "use": "@vercel/python"
         },
         {
-            "src": "api/index.py",
+            "src": "api/test_db.py",
             "use": "@vercel/python"
         }
     ],
@@ -17,11 +17,7 @@
         },
         {
             "src": "/test_db",
-            "dest": "/api/index.py"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/api/index.py"
+            "dest": "/api/test_db.py"
         }
     ],
     "env": {
@@ -38,7 +34,7 @@
             "memory": 1024,
             "maxDuration": 10
         },
-        "api/index.py": {
+        "api/test_db.py": {
             "memory": 2048,
             "maxDuration": 60
         }
