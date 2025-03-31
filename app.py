@@ -71,6 +71,38 @@ def init_db():
         print(f"Error initializing database: {str(e)}")
         raise
 
+@app.route('/test_db')
+def test_db():
+    try:
+        # Try to connect to MongoDB
+        db = get_db()
+        
+        # Try to insert a test document
+        test_doc = {
+            'test': True,
+            'timestamp': datetime.utcnow()
+        }
+        result = db.test_collection.insert_one(test_doc)
+        
+        # Try to read it back
+        test_doc = db.test_collection.find_one({'_id': result.inserted_id})
+        
+        # Clean up
+        db.test_collection.delete_one({'_id': result.inserted_id})
+        
+        return jsonify({
+            'success': True,
+            'message': 'Successfully connected to MongoDB Atlas!',
+            'database': 'bgmi_keys',
+            'test_document': str(test_doc)
+        })
+    except Exception as e:
+        print(f"Database connection test failed: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Failed to connect to MongoDB: {str(e)}'
+        }), 500
+
 # Initialize database
 init_db()
 
