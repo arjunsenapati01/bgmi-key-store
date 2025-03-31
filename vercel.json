@@ -18,8 +18,8 @@
         "FLASK_APP": "app.py",
         "FLASK_DEBUG": "0",
         "PYTHONUNBUFFERED": "1",
-        "MONGODB_URI": "mongodb+srv://your-username:your-password@your-cluster.mongodb.net/bgmi_keys?retryWrites=true&w=majority",
-        "SECRET_KEY": "your-secret-key-here"
+        "MONGODB_URI": "mongodb+srv://arjunsenapati01:D5M1tf3tjfY6uzB5@bgmikey.njscwi5.mongodb.net/bgmi_keys?retryWrites=true&w=majority",
+        "SECRET_KEY": "bgmi-key-store-secret-key-2024"
     },
     "functions": {
         "app.py": {
