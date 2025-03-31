@@ -18,7 +18,8 @@ from pymongo import MongoClient
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'bgmi-key-store-secret-key-2024')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Set session lifetime to 7 days
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://arjunsenapati01:D5M1tf3tjfY6uzB5@bgmikey.njscwi5.mongodb.net/bgmi_keys?retryWrites=true&w=majority')
@@ -79,13 +80,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Add session configuration
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_TYPE'] = 'filesystem'
-
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -93,8 +88,7 @@ login_manager.login_view = 'login'
 class User(UserMixin):
     def __init__(self, user_data):
         self.id = str(user_data['_id'])
-        self.username = user_data['username']
-        self.password_hash = user_data['password_hash']
+        self.email = user_data['email']
         self.is_admin = user_data.get('is_admin', False)
 
 @login_manager.user_loader
@@ -179,7 +173,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('Logged out successfully!', 'success')
+    flash('You have been logged out.', 'success')
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
@@ -197,14 +191,18 @@ def dashboard():
         'status': 'pending'
     }))
     
-    return render_template('user_dashboard.html',
-                         purchases=user_purchases,
+    return render_template('dashboard.html',
+                         user_purchases=user_purchases,
                          available_keys=available_keys,
                          pending_purchases=pending_purchases)
 
-@app.route('/admin/dashboard')
-@admin_required
+@app.route('/admin')
+@login_required
 def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     # Get all purchases
     purchases = list(get_db().purchases.find())
     
@@ -224,40 +222,41 @@ def admin_dashboard():
                          rejected_purchases=rejected_purchases)
 
 @app.route('/admin/add_key', methods=['POST'])
-@admin_required
+@login_required
 def add_key():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
     try:
         key = request.form.get('key')
-        price = float(request.form.get('price'))
-        
-        if not key or price <= 0:
-            flash('Please provide valid key and price', 'error')
-            return redirect(url_for('admin_dashboard'))
+        if not key:
+            return jsonify({'success': False, 'message': 'Key is required'})
         
         # Check if key already exists
         existing_key = get_db().serial_keys.find_one({'key': key})
         if existing_key:
-            flash('Key already exists', 'error')
-            return redirect(url_for('admin_dashboard'))
+            return jsonify({'success': False, 'message': 'Key already exists'})
         
         # Add new key
         new_key = {
             'key': key,
-            'price': price,
-            'is_used': False
+            'is_used': False,
+            'created_at': datetime.utcnow()
         }
         get_db().serial_keys.insert_one(new_key)
         
-        flash('Key added successfully!', 'success')
+        return jsonify({'success': True, 'message': 'Key added successfully'})
     except Exception as e:
         print(f"Error adding key: {str(e)}")
-        flash('Error adding key', 'error')
-    
-    return redirect(url_for('admin_dashboard'))
+        return jsonify({'success': False, 'message': 'Error adding key'})
 
 @app.route('/admin/approve_purchase/<purchase_id>')
-@admin_required
+@login_required
 def approve_purchase(purchase_id):
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     try:
         purchase = get_db().purchases.find_one({'_id': ObjectId(purchase_id)})
         if not purchase:
@@ -284,8 +283,12 @@ def approve_purchase(purchase_id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reject_purchase/<purchase_id>')
-@admin_required
+@login_required
 def reject_purchase(purchase_id):
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     try:
         purchase = get_db().purchases.find_one({'_id': ObjectId(purchase_id)})
         if not purchase:
@@ -313,22 +316,22 @@ def process_payment():
         key_id = request.form.get('key_id')
         utr_number = request.form.get('utr_number')
         
-        print(f"Processing payment - Key ID: {key_id}, UTR: {utr_number}")
+        print(f"Processing payment - Key ID: {key_id}, UTR: {utr_number}")  # Debug log
         
         if not key_id or not utr_number:
-            print("Missing key_id or utr_number")
+            print("Missing key_id or utr_number")  # Debug log
             flash('Please provide both key ID and UTR number.', 'danger')
             return redirect(url_for('dashboard'))
         
         # Get the key
         key = get_db().serial_keys.find_one({'_id': ObjectId(key_id)})
         if not key:
-            print(f"Key not found: {key_id}")
+            print(f"Key not found: {key_id}")  # Debug log
             flash('Key not found.', 'danger')
             return redirect(url_for('dashboard'))
             
         if key['is_used']:
-            print(f"Key already used: {key_id}")
+            print(f"Key already used: {key_id}")  # Debug log
             flash('This key has already been used.', 'danger')
             return redirect(url_for('dashboard'))
         
@@ -340,7 +343,7 @@ def process_payment():
         })
         
         if existing_purchase:
-            print(f"User already has pending purchase for key: {key_id}")
+            print(f"User already has a pending purchase for key: {key_id}")  # Debug log
             flash('You already have a pending purchase for this key.', 'danger')
             return redirect(url_for('dashboard'))
         
@@ -349,41 +352,36 @@ def process_payment():
             'user_id': current_user.id,
             'serial_key_id': ObjectId(key_id),
             'utr_number': utr_number,
-            'status': 'pending'
+            'status': 'pending',
+            'created_at': datetime.utcnow()
         }
         
-        print(f"Creating purchase - User: {current_user.id}, Key: {key_id}")
+        print(f"Creating purchase - User: {current_user.id}, Key: {key_id}")  # Debug log
         
         try:
             get_db().purchases.insert_one(purchase)
-            print("Purchase created successfully")
+            print("Purchase created successfully")  # Debug log
             flash('Payment details submitted successfully. Please wait for admin approval.', 'success')
         except Exception as db_error:
-            print(f"Database error: {str(db_error)}")
-            print(f"Traceback: {traceback.format_exc()}")
+            print(f"Database error: {str(db_error)}")  # Debug log
             flash('Error saving payment details. Please try again.', 'danger')
             return redirect(url_for('dashboard'))
             
     except Exception as e:
-        print(f"General error in process_payment: {str(e)}")
-        print(f"Traceback: {traceback.format_exc()}")
+        print(f"General error in process_payment: {str(e)}")  # Debug log
         flash('Error processing payment. Please try again.', 'danger')
     
     return redirect(url_for('dashboard'))
 
 @app.route('/admin/change_password', methods=['POST'])
-@admin_required
-def change_admin_password():
+@login_required
+def change_password():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
     try:
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if not all([current_password, new_password, confirm_password]):
-            return jsonify({'success': False, 'message': 'All fields are required'})
-        
-        if new_password != confirm_password:
-            return jsonify({'success': False, 'message': 'New passwords do not match'})
         
         # Get admin user
         admin = get_db().users.find_one({'email': 'admin@example.com'})
@@ -401,10 +399,9 @@ def change_admin_password():
         )
         
         return jsonify({'success': True, 'message': 'Password updated successfully'})
-        
     except Exception as e:
-        print(f"Error changing admin password: {str(e)}")
-        return jsonify({'success': False, 'message': 'Error updating password'})
+        print(f"Error changing password: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error changing password'})
 
 if __name__ == '__main__':
     app.run(debug=True) 
