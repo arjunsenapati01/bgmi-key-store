@@ -73,35 +73,54 @@ def init_db():
 
 @app.route('/test_db')
 def test_db():
+    print("Test route accessed")  # Debug log
     try:
+        print("Attempting to connect to MongoDB...")  # Debug log
         # Try to connect to MongoDB
         db = get_db()
         
+        print("Creating test document...")  # Debug log
         # Try to insert a test document
         test_doc = {
             'test': True,
-            'timestamp': datetime.utcnow()
+            'timestamp': datetime.utcnow(),
+            'connection_string': MONGODB_URI  # Add connection string for debugging
         }
         result = db.test_collection.insert_one(test_doc)
+        print(f"Test document inserted with ID: {result.inserted_id}")  # Debug log
         
         # Try to read it back
         test_doc = db.test_collection.find_one({'_id': result.inserted_id})
+        print("Test document retrieved successfully")  # Debug log
         
         # Clean up
         db.test_collection.delete_one({'_id': result.inserted_id})
+        print("Test document cleaned up")  # Debug log
         
         return jsonify({
             'success': True,
             'message': 'Successfully connected to MongoDB Atlas!',
             'database': 'bgmi_keys',
-            'test_document': str(test_doc)
+            'test_document': str(test_doc),
+            'connection_status': 'connected'
         })
     except Exception as e:
-        print(f"Database connection test failed: {str(e)}")
+        print(f"Database connection test failed: {str(e)}")  # Debug log
+        print(f"Full traceback: {traceback.format_exc()}")  # Debug log
         return jsonify({
             'success': False,
-            'message': f'Failed to connect to MongoDB: {str(e)}'
+            'message': f'Failed to connect to MongoDB: {str(e)}',
+            'connection_status': 'failed',
+            'error_details': str(e)
         }), 500
+
+# Add a simple health check route
+@app.route('/health')
+def health_check():
+    return jsonify({
+        'status': 'ok',
+        'timestamp': datetime.utcnow().isoformat()
+    })
 
 # Initialize database
 init_db()
