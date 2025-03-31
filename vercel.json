@@ -18,9 +18,8 @@
         "FLASK_APP": "app.py",
         "FLASK_DEBUG": "0",
         "PYTHONUNBUFFERED": "1",
-        "SQLALCHEMY_ECHO": "true",
-        "VERCEL_ENV": "production",
-        "SQLALCHEMY_DATABASE_URI": "sqlite:////tmp/bgmi_keys.db"
+        "MONGODB_URI": "mongodb+srv://your-username:your-password@your-cluster.mongodb.net/bgmi_keys?retryWrites=true&w=majority",
+        "SECRET_KEY": "your-secret-key-here"
     },
     "functions": {
         "app.py": {
