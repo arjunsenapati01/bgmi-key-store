@@ -8,6 +8,14 @@
     ],
     "routes": [
         {
+            "src": "/test_db",
+            "dest": "app.py"
+        },
+        {
+            "src": "/health",
+            "dest": "app.py"
+        },
+        {
             "src": "/(.*)",
             "dest": "app.py"
         }
