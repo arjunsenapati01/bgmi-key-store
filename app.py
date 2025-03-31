@@ -71,6 +71,32 @@ def init_db():
         print(f"Error initializing database: {str(e)}")
         raise
 
+# Add Vercel serverless function handler
+def handler(request):
+    """Handle incoming requests for Vercel serverless functions."""
+    print(f"Received request: {request.method} {request.path}")  # Debug log
+    
+    with app.request_context(request):
+        try:
+            response = app.handle_request()
+            return response
+        except Exception as e:
+            print(f"Error handling request: {str(e)}")  # Debug log
+            return jsonify({
+                'error': str(e),
+                'status': 'error'
+            }), 500
+
+# Add a simple health check route
+@app.route('/health')
+def health_check():
+    print("Health check route accessed")  # Debug log
+    return jsonify({
+        'status': 'ok',
+        'timestamp': datetime.utcnow().isoformat(),
+        'message': 'Health check endpoint is working'
+    })
+
 @app.route('/test_db')
 def test_db():
     print("Test route accessed")  # Debug log
@@ -113,16 +139,6 @@ def test_db():
             'connection_status': 'failed',
             'error_details': str(e)
         }), 500
-
-# Add a simple health check route
-@app.route('/health')
-def health_check():
-    print("Health check route accessed")  # Debug log
-    return jsonify({
-        'status': 'ok',
-        'timestamp': datetime.utcnow().isoformat(),
-        'message': 'Health check endpoint is working'
-    })
 
 # Initialize database
 init_db()
