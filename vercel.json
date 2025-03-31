@@ -9,15 +9,15 @@
     "routes": [
         {
             "src": "/test_db",
-            "dest": "app.py"
+            "dest": "/app.py"
         },
         {
             "src": "/health",
-            "dest": "app.py"
+            "dest": "/app.py"
         },
         {
             "src": "/(.*)",
-            "dest": "app.py"
+            "dest": "/app.py"
         }
     ],
     "env": {

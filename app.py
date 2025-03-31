@@ -480,4 +480,7 @@ def change_password():
         return jsonify({'success': False, 'message': 'Error changing password'})
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
+else:
+    # For Vercel serverless functions
+    app = app 
