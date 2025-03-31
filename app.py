@@ -120,7 +120,8 @@ def health_check():
     print("Health check route accessed")  # Debug log
     return jsonify({
         'status': 'ok',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.utcnow().isoformat(),
+        'message': 'Health check endpoint is working'
     })
 
 # Initialize database
@@ -152,7 +153,14 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return jsonify({
+        'status': 'ok',
+        'message': 'BGMI Key Store API is running',
+        'endpoints': {
+            'health': '/health',
+            'test_db': '/test_db'
+        }
+    })
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
