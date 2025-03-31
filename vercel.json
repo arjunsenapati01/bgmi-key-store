@@ -2,22 +2,22 @@
     "version": 2,
     "builds": [
         {
-            "src": "app.py",
+            "src": "api/index.py",
             "use": "@vercel/python"
         }
     ],
     "routes": [
         {
             "src": "/test_db",
-            "dest": "/app.py"
+            "dest": "/api/index.py"
         },
         {
             "src": "/health",
-            "dest": "/app.py"
+            "dest": "/api/index.py"
         },
         {
             "src": "/(.*)",
-            "dest": "/app.py"
+            "dest": "/api/index.py"
         }
     ],
     "env": {
@@ -30,7 +30,7 @@
         "SECRET_KEY": "bgmi-key-store-secret-key-2024"
     },
     "functions": {
-        "app.py": {
+        "api/index.py": {
             "memory": 2048,
             "maxDuration": 60
         }
