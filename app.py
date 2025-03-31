@@ -12,6 +12,7 @@ import os
 from dotenv import load_dotenv
 from flask_pymongo import PyMongo
 from bson import ObjectId
+from pymongo import MongoClient
 
 # Load environment variables
 load_dotenv()
@@ -20,10 +21,58 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 
 # MongoDB Configuration
-app.config['MONGO_URI'] = os.getenv('MONGODB_URI', 'mongodb+srv://your-username:your-password@your-cluster.mongodb.net/bgmi_keys?retryWrites=true&w=majority')
-mongo = PyMongo(app)
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://arjunsenapati01:D5M1tf3tjfY6uzB5@bgmikey.njscwi5.mongodb.net/bgmi_keys?retryWrites=true&w=majority')
+client = None
+db = None
 
-# Configure upload folder
+def get_db():
+    global client, db
+    try:
+        if client is None:
+            print("Connecting to MongoDB Atlas...")
+            client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+            # Test the connection
+            client.server_info()
+            db = client.bgmi_keys
+            print("Successfully connected to MongoDB Atlas!")
+        return db
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {str(e)}")
+        raise
+
+def init_db():
+    try:
+        db = get_db()
+        print("Initializing database...")
+        
+        # Create indexes
+        db.users.create_index([("email", 1)], unique=True)
+        db.serial_keys.create_index([("key", 1)], unique=True)
+        db.purchases.create_index([("user_id", 1)])
+        db.purchases.create_index([("serial_key_id", 1)])
+        print("Database indexes created successfully")
+        
+        # Create admin user if not exists
+        admin = db.users.find_one({"email": "admin@example.com"})
+        if not admin:
+            print("Creating admin user...")
+            admin_user = {
+                "email": "admin@example.com",
+                "password": generate_password_hash("admin123"),
+                "is_admin": True,
+                "created_at": datetime.utcnow()
+            }
+            db.users.insert_one(admin_user)
+            print("Admin user created successfully")
+        
+        print("Database initialization completed successfully")
+    except Exception as e:
+        print(f"Error initializing database: {str(e)}")
+        raise
+
+# Initialize database
+init_db()
+
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -50,40 +99,10 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    user_data = get_db().users.find_one({'_id': ObjectId(user_id)})
     if user_data:
         return User(user_data)
     return None
-
-def init_db():
-    try:
-        print("Initializing database...")
-        
-        # Create indexes
-        mongo.db.users.create_index('username', unique=True)
-        mongo.db.serial_keys.create_index('key', unique=True)
-        mongo.db.purchases.create_index([('user_id', 1), ('serial_key_id', 1)])
-        
-        # Create admin user if not exists
-        admin = mongo.db.users.find_one({'username': 'admin'})
-        if not admin:
-            print("Creating admin user...")
-            admin_user = {
-                'username': 'admin',
-                'password_hash': generate_password_hash('admin123'),
-                'is_admin': True
-            }
-            mongo.db.users.insert_one(admin_user)
-            print("Admin user created successfully!")
-        else:
-            print("Admin user already exists")
-            
-    except Exception as e:
-        print(f"Error initializing database: {str(e)}")
-        print(f"Traceback: {traceback.format_exc()}")
-
-# Call init_db when the app starts
-init_db()
 
 @app.route('/')
 def index():
@@ -93,103 +112,67 @@ def index():
 def register():
     if request.method == 'POST':
         try:
-            username = request.form.get('username')
+            email = request.form.get('email')
             password = request.form.get('password')
             
-            print(f"Attempting to register user: {username}")
+            print(f"Attempting to register user: {email}")
             
-            if not username or not password:
-                print("Missing username or password")
-                flash('Please provide both username and password', 'error')
-                return redirect(url_for('register'))
-            
-            # Check if user exists
-            existing_user = mongo.db.users.find_one({'username': username})
+            # Check if user already exists
+            db = get_db()
+            existing_user = db.users.find_one({"email": email})
             if existing_user:
-                print(f"Username already exists: {username}")
-                flash('Username already exists', 'error')
+                print(f"User already exists: {email}")
+                flash('Email already registered.', 'danger')
                 return redirect(url_for('register'))
             
             # Create new user
-            print(f"Creating new user: {username}")
-            new_user = {
-                'username': username,
-                'password_hash': generate_password_hash(password),
-                'is_admin': False
+            user = {
+                "email": email,
+                "password": generate_password_hash(password),
+                "is_admin": False,
+                "created_at": datetime.utcnow()
             }
             
-            try:
-                result = mongo.db.users.insert_one(new_user)
-                print(f"User {username} created successfully with ID: {result.inserted_id}")
-                
-                # Verify user was created
-                verify_user = mongo.db.users.find_one({'_id': result.inserted_id})
-                if verify_user:
-                    print(f"User verified in database: {verify_user['username']}, ID: {verify_user['_id']}")
-                    flash('Registration successful! Please login.', 'success')
-                    return redirect(url_for('login'))
-                else:
-                    print("User not found after creation")
-                    flash('Error creating user. Please try again.', 'error')
-                    return redirect(url_for('register'))
-                    
-            except Exception as db_error:
-                print(f"Database error during registration: {str(db_error)}")
-                print(f"Traceback: {traceback.format_exc()}")
-                flash('Error creating user. Please try again.', 'error')
-                return redirect(url_for('register'))
-                
-        except Exception as e:
-            print(f"General error during registration: {str(e)}")
-            print(f"Traceback: {traceback.format_exc()}")
-            flash('Error during registration. Please try again.', 'error')
-            return redirect(url_for('register'))
+            result = db.users.insert_one(user)
+            print(f"User registered successfully with ID: {result.inserted_id}")
             
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            print(f"Error during registration: {str(e)}")
+            flash('Error during registration. Please try again.', 'danger')
+            return redirect(url_for('register'))
+    
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         try:
-            username = request.form.get('username')
+            email = request.form.get('email')
             password = request.form.get('password')
             
-            print(f"Login attempt for user: {username}")
+            print(f"Attempting login for user: {email}")
             
-            if not username or not password:
-                print("Missing username or password")
-                flash('Please provide both username and password', 'error')
-                return redirect(url_for('login'))
+            db = get_db()
+            user = db.users.find_one({"email": email})
             
-            # Get user from database
-            user_data = mongo.db.users.find_one({'username': username})
-            
-            if not user_data:
-                print(f"User not found: {username}")
-                flash('Invalid username or password', 'error')
-                return redirect(url_for('login'))
-            
-            print(f"User found: {user_data['username']}, ID: {user_data['_id']}")
-            
-            # Verify password
-            if check_password_hash(user_data['password_hash'], password):
-                print(f"Password verified for user: {username}")
-                # Set session as permanent
-                session.permanent = True
-                login_user(User(user_data))
-                flash('Logged in successfully!', 'success')
+            if user and check_password_hash(user['password'], password):
+                print(f"Login successful for user: {email}")
+                user_obj = User(user)
+                login_user(user_obj)
                 return redirect(url_for('dashboard'))
             else:
-                print(f"Invalid password for user: {username}")
-                flash('Invalid username or password', 'error')
+                print(f"Login failed for user: {email}")
+                flash('Invalid email or password.', 'danger')
                 return redirect(url_for('login'))
                 
         except Exception as e:
             print(f"Error during login: {str(e)}")
-            print(f"Traceback: {traceback.format_exc()}")
-            flash('Error during login. Please try again.', 'error')
+            flash('Error during login. Please try again.', 'danger')
             return redirect(url_for('login'))
-            
+    
     return render_template('login.html')
 
 @app.route('/logout')
@@ -203,13 +186,13 @@ def logout():
 @login_required
 def dashboard():
     # Get user's purchases
-    user_purchases = list(mongo.db.purchases.find({'user_id': current_user.id}))
+    user_purchases = list(get_db().purchases.find({'user_id': current_user.id}))
     
     # Get available keys
-    available_keys = list(mongo.db.serial_keys.find({'is_used': False}))
+    available_keys = list(get_db().serial_keys.find({'is_used': False}))
     
     # Get pending purchases
-    pending_purchases = list(mongo.db.purchases.find({
+    pending_purchases = list(get_db().purchases.find({
         'user_id': current_user.id,
         'status': 'pending'
     }))
@@ -223,16 +206,16 @@ def dashboard():
 @admin_required
 def admin_dashboard():
     # Get all purchases
-    purchases = list(mongo.db.purchases.find())
+    purchases = list(get_db().purchases.find())
     
     # Get all keys
-    keys = list(mongo.db.serial_keys.find())
+    keys = list(get_db().serial_keys.find())
     
     # Get pending purchases
-    pending_purchases = list(mongo.db.purchases.find({'status': 'pending'}))
+    pending_purchases = list(get_db().purchases.find({'status': 'pending'}))
     
     # Get rejected purchases
-    rejected_purchases = list(mongo.db.purchases.find({'status': 'rejected'}))
+    rejected_purchases = list(get_db().purchases.find({'status': 'rejected'}))
     
     return render_template('admin_dashboard.html',
                          purchases=purchases,
@@ -252,7 +235,7 @@ def add_key():
             return redirect(url_for('admin_dashboard'))
         
         # Check if key already exists
-        existing_key = mongo.db.serial_keys.find_one({'key': key})
+        existing_key = get_db().serial_keys.find_one({'key': key})
         if existing_key:
             flash('Key already exists', 'error')
             return redirect(url_for('admin_dashboard'))
@@ -263,7 +246,7 @@ def add_key():
             'price': price,
             'is_used': False
         }
-        mongo.db.serial_keys.insert_one(new_key)
+        get_db().serial_keys.insert_one(new_key)
         
         flash('Key added successfully!', 'success')
     except Exception as e:
@@ -276,19 +259,19 @@ def add_key():
 @admin_required
 def approve_purchase(purchase_id):
     try:
-        purchase = mongo.db.purchases.find_one({'_id': ObjectId(purchase_id)})
+        purchase = get_db().purchases.find_one({'_id': ObjectId(purchase_id)})
         if not purchase:
             flash('Purchase not found', 'error')
             return redirect(url_for('admin_dashboard'))
         
         # Update purchase status
-        mongo.db.purchases.update_one(
+        get_db().purchases.update_one(
             {'_id': ObjectId(purchase_id)},
             {'$set': {'status': 'approved'}}
         )
         
         # Mark key as used
-        mongo.db.serial_keys.update_one(
+        get_db().serial_keys.update_one(
             {'_id': purchase['serial_key_id']},
             {'$set': {'is_used': True}}
         )
@@ -304,13 +287,13 @@ def approve_purchase(purchase_id):
 @admin_required
 def reject_purchase(purchase_id):
     try:
-        purchase = mongo.db.purchases.find_one({'_id': ObjectId(purchase_id)})
+        purchase = get_db().purchases.find_one({'_id': ObjectId(purchase_id)})
         if not purchase:
             flash('Purchase not found', 'error')
             return redirect(url_for('admin_dashboard'))
         
         # Update purchase status
-        mongo.db.purchases.update_one(
+        get_db().purchases.update_one(
             {'_id': ObjectId(purchase_id)},
             {'$set': {'status': 'rejected'}}
         )
@@ -338,7 +321,7 @@ def process_payment():
             return redirect(url_for('dashboard'))
         
         # Get the key
-        key = mongo.db.serial_keys.find_one({'_id': ObjectId(key_id)})
+        key = get_db().serial_keys.find_one({'_id': ObjectId(key_id)})
         if not key:
             print(f"Key not found: {key_id}")
             flash('Key not found.', 'danger')
@@ -350,7 +333,7 @@ def process_payment():
             return redirect(url_for('dashboard'))
         
         # Check if user already has a pending purchase for this key
-        existing_purchase = mongo.db.purchases.find_one({
+        existing_purchase = get_db().purchases.find_one({
             'user_id': current_user.id,
             'serial_key_id': ObjectId(key_id),
             'status': 'pending'
@@ -372,7 +355,7 @@ def process_payment():
         print(f"Creating purchase - User: {current_user.id}, Key: {key_id}")
         
         try:
-            mongo.db.purchases.insert_one(purchase)
+            get_db().purchases.insert_one(purchase)
             print("Purchase created successfully")
             flash('Payment details submitted successfully. Please wait for admin approval.', 'success')
         except Exception as db_error:
@@ -403,18 +386,18 @@ def change_admin_password():
             return jsonify({'success': False, 'message': 'New passwords do not match'})
         
         # Get admin user
-        admin = mongo.db.users.find_one({'username': 'admin'})
+        admin = get_db().users.find_one({'email': 'admin@example.com'})
         if not admin:
             return jsonify({'success': False, 'message': 'Admin user not found'})
         
         # Verify current password
-        if not check_password_hash(admin['password_hash'], current_password):
+        if not check_password_hash(admin['password'], current_password):
             return jsonify({'success': False, 'message': 'Current password is incorrect'})
         
         # Update password
-        mongo.db.users.update_one(
-            {'username': 'admin'},
-            {'$set': {'password_hash': generate_password_hash(new_password)}}
+        get_db().users.update_one(
+            {'email': 'admin@example.com'},
+            {'$set': {'password': generate_password_hash(new_password)}}
         )
         
         return jsonify({'success': True, 'message': 'Password updated successfully'})
